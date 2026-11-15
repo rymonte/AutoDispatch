@@ -20,7 +20,7 @@ Ruleset [Protect main](https://github.com/rymonte/AutoDispatch/rules/27330040) (
 - Require linear history; block force pushes and branch deletion.
 - No bypass actors, including administrators; no merge queue.
 
-Activation status: disabled pending successful checks on the verification PR. The bootstrap PR #1 already passed both named checks; its check-runs identify GitHub Actions as their source. The setup will activate only after a fresh documentation PR passes, then verify the effective rules on main before merging that PR normally.
+Activation status: **active**. Both required jobs passed on [verification PR #5](https://github.com/rymonte/AutoDispatch/pull/5), at commit 6b3b034d4f9798cf64e6e8887ec955923de735af, before activation. The ruleset API then returned active with an empty bypass list; the effective main branch rules endpoint returned all five configured rules. GitHub reported the PR mergeable without a review approval. This final documentation update must pass the same checks before normal squash merge; no admin bypass is used.
 
 Squash merging is enabled and merged branches are automatically deleted. Repository-level rebase merging is also enabled; the contribution workflow remains squash-only. This protection change does not alter the other merge settings.
 
