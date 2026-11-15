@@ -1,0 +1,11 @@
+{
+  "globs": ["**/*.md"],
+  "ignores": [
+    "node_modules/**",
+    "prd.md",
+    "prd-v0.3.md",
+    "data-model-proposal.md",
+    "domain-persistence-proposal.md",
+  ],
+  "config": { "default": true, "MD013": false },
+}

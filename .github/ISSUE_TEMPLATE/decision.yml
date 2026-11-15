@@ -1,0 +1,48 @@
+{
+  "name": "Architecture or decision proposal",
+  "description": "Propose a decision for explicit maintainer approval",
+  "labels": ["awaiting decision"],
+  "body":
+    [
+      {
+        "type": "textarea",
+        "id": "field-0",
+        "attributes":
+          {
+            "label": "Context and references",
+            "description": "Problem, context and PRD references.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-1",
+        "attributes":
+          {
+            "label": "Alternatives",
+            "description": "Options, trade-offs and evidence.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-2",
+        "attributes":
+          {
+            "label": "Recommendation and consequences",
+            "description": "Recommendation, consequences, risks and validation needed.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-3",
+        "attributes":
+          {
+            "label": "Approval status",
+            "description": "Proposed by default. Only the maintainer/product owner may accept; link explicit approval evidence.",
+          },
+        "validations": { "required": true },
+      },
+    ],
+}

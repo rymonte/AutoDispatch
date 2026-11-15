@@ -1,0 +1,58 @@
+{
+  "name": "Bug report",
+  "description": "Report a repository defect or future application problem",
+  "labels": ["bug"],
+  "body":
+    [
+      {
+        "type": "textarea",
+        "id": "field-0",
+        "attributes":
+          {
+            "label": "Stage and summary",
+            "description": "No application is released yet. Is this a repository issue or an authorised test build?",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-1",
+        "attributes":
+          {
+            "label": "Versions",
+            "description": "Application/revision, Windows and MSFS version (or not applicable).",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-2",
+        "attributes":
+          {
+            "label": "Aircraft and integrations",
+            "description": "Aircraft/add-on version; SimConnect, Navigraph/SimBrief and Hoppie status where relevant.",
+          },
+        "validations": { "required": false },
+      },
+      {
+        "type": "textarea",
+        "id": "field-3",
+        "attributes":
+          {
+            "label": "Reproduction",
+            "description": "Steps to reproduce, expected behaviour and actual behaviour.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-4",
+        "attributes":
+          {
+            "label": "Evidence",
+            "description": "Sanitised logs/screenshots; remove keys, personal OFPs and account data.",
+          },
+        "validations": { "required": false },
+      },
+    ],
+}

@@ -1,0 +1,48 @@
+{
+  "name": "Discovery or research task",
+  "description": "Define bounded evidence gathering before implementation",
+  "labels": ["research"],
+  "body":
+    [
+      {
+        "type": "textarea",
+        "id": "field-0",
+        "attributes":
+          {
+            "label": "Objective and references",
+            "description": "Research objective and relevant PRE-xx, Mxx, ACxx, DEC-xxx or PRD question.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-1",
+        "attributes":
+          {
+            "label": "Questions and current evidence",
+            "description": "Questions to answer, dated sources, versions and evidence level.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-2",
+        "attributes":
+          {
+            "label": "Validation and acceptance",
+            "description": "Required validation, proposed acceptance criteria and evidence standard. Live validation needs specific authorisation.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-3",
+        "attributes":
+          {
+            "label": "Dependencies and deliverables",
+            "description": "Dependencies, expected outputs, confidence, limitations and remaining uncertainty.",
+          },
+        "validations": { "required": true },
+      },
+    ],
+}

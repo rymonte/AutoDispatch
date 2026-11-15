@@ -1,0 +1,38 @@
+{
+  "name": "Feature request",
+  "description": "Propose a user-facing improvement; proposals are not accepted MVP scope",
+  "labels": ["enhancement"],
+  "body":
+    [
+      {
+        "type": "textarea",
+        "id": "field-0",
+        "attributes":
+          {
+            "label": "Problem",
+            "description": "What user problem needs solving?",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-1",
+        "attributes":
+          {
+            "label": "Desired behaviour",
+            "description": "Describe an example use case and expected outcome.",
+          },
+        "validations": { "required": true },
+      },
+      {
+        "type": "textarea",
+        "id": "field-2",
+        "attributes":
+          {
+            "label": "Existing scope and alternatives",
+            "description": "Relationship to PRD capabilities; alternatives considered.",
+          },
+        "validations": { "required": true },
+      },
+    ],
+}

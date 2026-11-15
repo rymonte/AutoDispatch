@@ -1,0 +1,16 @@
+node_modules/
+coverage/
+dist/
+out/
+*.log
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+.DS_Store
+Thumbs.db
+research-private/
+diagnostics-private/

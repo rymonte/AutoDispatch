@@ -1,0 +1,26 @@
+name: Pull request title
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+permissions: {}
+concurrency:
+  group: title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  title:
+    name: PR title
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # No checkout, secrets or contribution code in this metadata-only job.
+      - name: Validate Conventional Commit title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          node <<'JS'
+          const pattern = /^(feat|fix|docs|refactor|perf|test|build|ci|chore)(\([a-zA-Z0-9._/-]+\))?!?: \S.+$/u;
+          if (!pattern.test(process.env.PR_TITLE)) {
+            console.error('Use a Conventional Commit PR title, for example docs: clarify discovery evidence');
+            process.exit(1);
+          }
+          JS

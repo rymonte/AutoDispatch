@@ -1,19 +1,30 @@
 # AutoDispatch
 
-A local-first Windows desktop application for managing multi-leg airline rotations in Microsoft Flight Simulator 2020 and 2024, subject to integration validation.
+AutoDispatch (provisional name) is a planned local-first Windows desktop application for flight simulation enthusiasts operating consecutive sectors with the same aircraft.
 
-The planned application coordinates flight monitoring, turnaround timing, SimBrief flight planning and preliminary dispatch messages through Hoppie ACARS.
+## Status and planned capabilities
 
-## Project status
+**Discovery / pre-implementation. No application code, approved development baseline or downloadable application exists.** Requirements are agreed; technical feasibility and detailed design remain outstanding.
 
-Discovery and technical validation. Electron, TypeScript and React are the accepted stack (DEC-046). DEC-050 defines a React presentation layer, a thin Electron main process, and a separate backend utility process with independent domain modules and integration adapters. Application implementation has not started; integration/resource validation and detailed domain, storage and recovery design remain outstanding.
+The planned MVP manages one working multi-leg rotation, CSV/manual schedule entry, simulator flight monitoring, turnaround scheduling, supported unattended SimBrief planning, recovery and an internal preliminary dispatch message centre with optional Hoppie ACARS. These are requirements, not implemented features. MSFS 2020/2024 and aircraft compatibility are intended and unvalidated. Navigraph permission and supported unattended generation remain a product-viability dependency.
 
-## Documentation
+DEC-046 accepts Electron, TypeScript, React and Node.js execution. DEC-050 separates pure domain modules and integration adapters within a utility process, React presentation and a thin Electron main process. Data stays local; user-authorised external requests go directly to services. SimConnect (candidate transport: node-simconnect), Navigraph/SimBrief, Hoppie and airport/timezone services are planned integrations, not verified capabilities.
 
-- [Current PRD — v0.4](prd.md): product requirements, acceptance criteria, integration evidence, decisions and outstanding questions.
-- [Pre-implementation action checklist](prd.md#pre-implementation-action-checklist): remaining validation and design work before the development baseline.
-- [Previous PRD — v0.3](prd-v0.3.md): preserved discovery snapshot.
-- [Domain, state and persistence proposal](domain-persistence-proposal.md): detailed recommendations for review; stack/process decisions are recorded in the PRD.
-- [Data model proposal](data-model-proposal.md): proposed objects, fields and invariants; detailed storage choices remain subject to review and validation.
+## Follow and contribute
 
-Accepted product, stack and high-level architecture decisions are recorded in the PRD. Detailed design proposals and unverified integration capabilities remain explicitly identified; these decisions do not imply development-baseline approval.
+Follow repository issues and pull requests; use the issue forms for findings, bugs, suggestions and proposed decisions. Suggestions do not automatically enter MVP scope. See [contribution guidance](CONTRIBUTING.md), the [agent contract](AGENTS.md) and [local checks](docs/development/quality.md). Future releases will be published through repository Releases once available.
+
+## Authoritative documentation
+
+- [PRD v0.4](prd.md): scope, ACxx criteria, DEC-xxx decisions and PRE-01?PRE-10 baseline gates.
+- [Previous discovery snapshot](prd-v0.3.md).
+- [Domain and persistence proposal](domain-persistence-proposal.md) and [data-model proposal](data-model-proposal.md): detailed proposals remain subject to approval.
+- [Architecture and security baseline](docs/architecture/boundaries.md).
+- [Testing strategy](docs/testing/strategy.md) and [release readiness](docs/releasing/readiness.md).
+- [Repository audit and GitHub settings](docs/development/repository.md).
+
+## Licence and affiliation
+
+Licence selection is pending maintainer approval; no open-source licence is granted by this bootstrap. See the [licensing assessment](docs/development/licensing.md). Do not assume reuse rights from repository visibility.
+
+AutoDispatch is an unofficial project, not affiliated with or endorsed by Microsoft, Asobo, Navigraph/SimBrief, Hoppie or aircraft/add-on vendors. Names and trademarks belong to their respective owners. Intended integration does not imply permission, compatibility or endorsement.
