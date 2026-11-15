@@ -27,3 +27,4 @@ Describe migration/impact, or state none.
 - [ ] Checks/tests and documentation are appropriate to the change.
 - [ ] No secrets, unsupported compatibility claims or unexplained dependencies.
 - [ ] Architecture boundaries and discovery restrictions are respected.
+- [ ] I am authorised to submit this contribution under the terms in CONTRIBUTING.md.

@@ -25,6 +25,6 @@ Follow repository issues and pull requests; use the issue forms for findings, bu
 
 ## Licence and affiliation
 
-Licence selection is pending maintainer approval; no open-source licence is granted by this bootstrap. See the [licensing assessment](docs/development/licensing.md). Do not assume reuse rights from repository visibility.
+AutoDispatch is source-available under [PolyForm Noncommercial 1.0.0](LICENSE). Non-commercial use, modification and redistribution are permitted under its terms; commercial resale is not authorised. This is not an OSI-approved open-source licence. See [copyright notices](COPYRIGHT.md) and the [licensing policy](docs/development/licensing.md). Contributors retain copyright in their contributions.
 
 AutoDispatch is an unofficial project, not affiliated with or endorsed by Microsoft, Asobo, Navigraph/SimBrief, Hoppie or aircraft/add-on vendors. Names and trademarks belong to their respective owners. Intended integration does not imply permission, compatibility or endorsement.

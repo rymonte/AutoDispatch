@@ -20,4 +20,10 @@ Run [local checks](docs/development/quality.md). Update relevant documentation w
 
 There is no released app yet. Use bugs for repository defects now; future app reports should include versions, aircraft, reproduction, expected/actual results and sanitised evidence. Feature requests describe the user problem and alternatives and do not automatically expand MVP. Sensitive vulnerabilities follow SECURITY.md.
 
-Licensing is pending approval. Submit only material you have authority to contribute; no contributor licence agreement or inbound licence is invented here. Resolve contribution licensing before accepting substantial outside code or publishing releases.
+## Contribution licensing and acknowledgement
+
+By intentionally submitting an original contribution for inclusion, you agree to license it under the repository's [PolyForm Noncommercial 1.0.0 licence](LICENSE). You retain copyright in your contribution; no copyright assignment is required. Submit only material you own or are authorised to license on these terms. Clearly identify third-party material and its licence before submission; do not silently relicense it.
+
+Contributing does not grant ownership of existing project material, maintainer authority or entitlement to donations or other revenue. Accepted contributions will be acknowledged in the relevant release notes using your GitHub handle or preferred attribution, unless you request no public acknowledgement. Release-note credit is additional to any required copyright notices. Preserve applicable contributor notices.
+
+The maintainer retains control of the official repository and releases. The project licence grants non-commercial rights; it does not give the maintainer separate commercial rights to contributor-owned code. Commercial relicensing of that code would require the relevant rights holders' permission. No broader contributor agreement is imposed. See the [licensing policy](docs/development/licensing.md).

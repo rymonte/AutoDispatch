@@ -1,6 +1,6 @@
 # Windows release readiness
 
-No binaries or release pipeline exist. Before implementation, resolve or explicitly agree baseline risks under PRE-01?PRE-10. Before distribution, approve licensing and verify dependency/SDK rights, third-party notices and replaceability obligations. Installer versus portable packaging, update mechanism and supported Windows versions remain design decisions.
+No binaries or release pipeline exist. Before implementation, resolve or explicitly agree baseline risks under PRE-01?PRE-10. Before distribution, include the approved PolyForm Noncommercial licence and copyright notices, and verify dependency/SDK rights, contributor permissions, third-party notices and replaceability obligations. Installer versus portable packaging, update mechanism and supported Windows versions remain design decisions.
 
 When executable code exists, add reproducible lockfile builds, type/lint/test/security gates and Windows Electron packaging smoke tests. Validate packaged utility/preload/renderer boundaries, credentials, recovery, install/uninstall and upgrade behaviour on clean Windows environments. Publish an explicit simulator/aircraft compatibility matrix backed by live evidence, resource measurements and known limitations.
 

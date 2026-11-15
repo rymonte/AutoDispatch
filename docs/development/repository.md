@@ -17,7 +17,7 @@ After plan eligibility changes, activate protection as follows:
 3. Add only the observed successful status checks, selecting GitHub Actions as source where supported. Do not require future build/test/coverage jobs. Check that a sole maintainer can squash merge the PR without an unavailable approval.
 4. Activate only after successful check evidence. If activation happens after bootstrap merge, first verify these checks on a subsequent small PR. Record ruleset ID, settings and verification in a follow-up PR.
 
-Before public launch, enable private vulnerability reporting under Settings ? Security where available. Inspect secret scanning/push protection eligibility and enable supported controls. Neither is claimed active by bootstrap. CodeQL is deferred until supported source exists. Licence choice/copyright holder and development-baseline approval require explicit maintainer decisions.
+Before public launch, enable private vulnerability reporting under Settings ? Security where available. Inspect secret scanning/push protection eligibility and enable supported controls. Neither is claimed active by bootstrap. CodeQL is deferred until supported source exists. The maintainer approved PolyForm Noncommercial 1.0.0 and contributor-retained copyright on 15 November 2026; see licensing.md. Development-baseline approval remains outstanding.
 
 ## Verification limits
 
