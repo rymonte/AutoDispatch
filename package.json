@@ -1,0 +1,19 @@
+{
+  "name": "autodispatch-repository",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Discovery-stage repository checks only; no application runtime",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "check": "prettier --check . && markdownlint-cli2 && node scripts/check-repository.mjs",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "prettier": "3.10.1",
+    "markdownlint-cli2": "0.24.1",
+    "yaml": "2.9.1"
+  }
+}

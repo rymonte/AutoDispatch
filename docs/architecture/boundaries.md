@@ -1,0 +1,9 @@
+# Architecture and future security baseline
+
+[DEC-046 and DEC-050 in the PRD](../../prd.md) are accepted. Pure TypeScript domain modules own rotation, phases, coordination, timing and message generation and define ports. They must not import Node APIs, Electron, React or concrete integrations. Integration adapters implement ports alongside domain modules in the utility process. Renderer submits commands and presents snapshots; it cannot directly access adapters. Main owns lifecycle, supervision, IPC routing and safeStorage credential operations; backend integrations own persistence.
+
+PRE-09 must settle authoritative state coordination, IPC schemas, storage format/recovery, per-user authentication, cancellation/error handling and bounded logging/retention. Existing data/domain proposals remain proposals. No final paths, contracts or schema are selected here.
+
+Once paths exist, evaluate ESLint restricted imports or dependency-cruiser rules to enforce inward dependencies and prevent renderer adapter access. Verify enforcement using deliberate forbidden-import cases. Keep domain tests free of simulator, network and platform dependencies.
+
+The future Electron baseline requires context isolation, renderer Node integration disabled, sandboxing where supported, explicit validated IPC channels with sender checks, minimal preload exposure, restrictive Content Security Policy, navigation restrictions and allowlisted external URL handling. Validate commands and responses across privilege boundaries. Main performs secure credential operations through safeStorage; credentials must never enter renderer state, logs or exported diagnostics. Validate encryption availability and failure behaviour during detailed design. Review Electron's current security guidance at implementation time; this document does not implement a shell.
