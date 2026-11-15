@@ -1,8 +1,8 @@
 # AutoDispatch — proposed data model
 
-**Review draft, 15 November 2026.** Field names and storage shapes below are proposals, not application code or an approved schema. Electron + React + TypeScript is decided; JSON is the preferred persistence direction.
+**Review draft, amended 15 November 2026.** Field names and storage shapes remain proposals, not application code or an approved schema. The targeted review rules in DEC-051–054 are accepted; this does not approve the complete model or close PRE-09. Electron + React + TypeScript is decided; JSON is the preferred persistence direction.
 
-Read alongside the [domain and persistence proposal](domain-persistence-proposal.md). The authoritative `E:\Projects\AutoDispatch\prd.md` was inspected again: its uncommitted DEC-046 and newly added DEC-050 record the accepted stack and utility-process/domain/integration separation. This worktree's PRD lacks those updates; it has not been overwritten. This model follows the authoritative requirements, including DEC-050, while preserving PRE-02/04/09 uncertainties. No service payload fields or endpoints are assumed to be verified.
+Read alongside the [domain and persistence proposal](domain-persistence-proposal.md) and authoritative [PRD](prd.md). DEC-046/050 record the accepted stack and utility-process/domain/integration separation. This amendment aligns the model with accepted DEC-051–054 while preserving PRE-02/04/09 uncertainties. No service payload fields or endpoints are assumed to be verified.
 
 ## Model at a glance
 
@@ -82,7 +82,7 @@ Derive the active leg from `legs[].lifecycle`; enforce at most one Active leg in
 
 `arrivalDispatch` tracks one automatic operational-OFP workflow, with no primary/fallback plan or request categories. Low-speed arrival and shutdown are opportunities to evaluate that same workflow. A saved successful outcome prevents another automatic generation even if a subsequent edit makes the OFP Out of date; explicit regeneration is separate. Pending/uncertain work prevents an overlapping request. After definitive failure, shutdown may permit another attempt. If updated gate timing changes the submitted inputs, create a new ordinary operational-OFP request and update this reference, preserving immutable submitted inputs on the previous request. `shutdownObserved` remembers eligibility when shutdown occurs during a pending request; it is not live proof that the aircraft is still grounded or that holds are clear.
 
-**Review clarification:** a recovery action creates an ordinary leg with a new ID and fresh planning inputs. It has no `recoveryOf` relationship or special recovery subtype; subsequent planning, dispatch and monitoring are identical to any other leg. The original completed attempt remains intact. M16 currently describes re-dispatch as a new leg “associated with the original attempt”; the owner's clarification here removes a durable lineage relationship from the proposed model. That wording should be aligned during a future PRD review; the PRD is unchanged by this edit. Recovery holds still identify the arrival requiring a user choice until that workflow is resolved.
+**Accepted recovery clarification (DEC-053):** a recovery action creates an ordinary leg with a new ID and fresh planning inputs. It has no `recoveryOf` relationship or special recovery subtype; subsequent planning, dispatch and monitoring are identical to any other leg. The original completed attempt remains intact. M16 now reflects this rule. Recovery holds still identify the arrival requiring a user choice until that workflow is resolved; transient workflow context is not a permanent lineage relationship.
 
 **LegPlanning**
 
@@ -132,6 +132,8 @@ Represent holds explicitly rather than one `automationPaused` boolean. Clearing 
 
 Handover anchors to inbound actual completion, not current time after restart. Due time is completion plus ten simulator minutes. Consuming handover and activating its target happen in one snapshot; early qualifying departure additionally locks that leg. Reordering/removing an eligible target must reconcile handover references and continuity in the same command. It never records departure movement during a manual-reposition hold.
 
+**Ordering during planning (DEC-052):** evaluate every insertion, removal and reorder against outstanding planning requests before applying it. Reject the whole edit if it changes a locked request's startup-first-leg identity, next-eligible-leg identity, or inbound predecessor/context used for readiness or preliminary messaging. Apply this to `prepared`, `possiblySent` and `uncertain` requests; normal completion/failure releases this protection together with the temporary lock. Do not cancel or reinterpret a request implicitly through a list edit. Changes confined to unaffected later legs remain permitted, subject to continuity and ordinary planning locks. Subsequent-leg activation/departure while its request is pending is still allowed: this restriction governs user schedule edits, not the accepted handover workflow. Store the relevant startup/inbound/target identity in the request context and recheck it before dependent effects; matching only leg ID and planning revision is insufficient.
+
 ## Requests and returned plans
 
 Keep requests separate from results. An acknowledgement is neither an OFP nor commencement. These are domain-side records, not claims about external API field names.
@@ -143,6 +145,7 @@ Keep requests separate from results. An acknowledgement is neither an OFP nor co
 | `id`, `rotationId`, `legId` | Local association; results must match all applicable identities |
 | `kind` | `advancePreparation` or `operationalOfp`: the requested planning outcome, not the reason it was triggered |
 | `planningRevision`, `submittedInputs` | Frozen effective leg/aircraft values plus resolved request-time readiness, taxi/turnaround inputs and their provenance |
+| `eligibilityContext` | Captured startup-first-leg or inbound/next-leg identities needed by DEC-052; local coordination metadata, not an additional plan-kind enum or assumed service field |
 | `state` | `prepared`, `possiblySent`, `succeeded`, `definitiveFailure` or `uncertain` |
 | `attemptCount` | Bounded retry accounting for this logical action; no unlimited attempt log |
 | `createdAtSystemUtc`, `lastAttemptAtSystemUtc`, `finishedAtSystemUtc` | Service/diagnostic times, with nulls where not applicable |
@@ -180,7 +183,13 @@ Retain results needed by the current OFP, advance result, message provenance, sc
 
 Create the message and its automatic-message marker together before submitting. Acceptance ends retries. Local read/unread never means cockpit read, delivery or acknowledgement. Freeze the inbound callsign even if the next leg subsequently activates. Revised planning does not rewrite a previously generated message or cause another automatic one.
 
-When an unflown leg is explicitly removed, retain generated message content for the rotation lifetime. Historical `aboutLegId` references may then point to a removed leg; its frozen identity/route summary explains the message without retaining a hidden operational leg. Operational references (handover/current request/current OFP) must always resolve to an existing eligible leg. Generation-locked removal is rejected; late callbacks for removed identities cannot recreate them.
+**Removal and retained history (DEC-051):** when an unflown leg is explicitly removed, retain generated message content for the rotation lifetime. Its frozen identity/route summary explains the message without retaining a hidden operational leg. Apply all cleanup in the same snapshot as the removal:
+
+- Reject removal while a planning request for that leg is unresolved, or when the edit would invalidate another locked request under DEC-052.
+- Retain the immutable PlanResults and terminal PlanningRequests required by retained messages or other surviving success/baseline references. Keep their result-to-request associations resolvable. Their leg IDs and captured eligibility context may refer to the removed leg strictly as historical provenance. Prune unreferenced terminal records and optional document references together; external document cleanup follows snapshot publication.
+- Allow historical leg identifiers in messages, retained terminal requests and retained results to be absent from `legs`. This exception does not apply to unresolved requests, current-leg OFP/advance-result pointers, handover targets, arrival-dispatch links or recovery-hold targets.
+- Reconcile live handover/target references and airport continuity before committing. Removing a target must not silently release an existing manual-reposition or arrival-recovery hold; retain the originating hold and require the applicable explicit recovery choice/Resume for its valid replacement target. Reject the edit if no valid reconciliation is available.
+- Retained records cannot make a removed leg eligible, produce another automatic message, submit another network request or recreate it from a late callback. Historical success evidence is not a queue.
 
 ## Preferences and reusable rules
 
@@ -203,13 +212,14 @@ Keep live telemetry, freshness/session sequences, connection/authentication heal
 Validate these invariants on commands and snapshot load:
 
 1. At most one working rotation and one Active leg; no Active leg in an unstarted rotation.
-2. Current operational references resolve within the same rotation; IDs are unique. Historical message references are the explicit exception above.
+2. Current operational references resolve within the same rotation; IDs are unique. Only historical leg identifiers in retained messages, terminal requests and results may refer to a removed leg under DEC-051. Required message/result/request references still resolve, and those records cannot drive operational actions.
 3. Departed/completed planning is locked; request completion cannot unlock it. Recovered airborne context establishes departure even with missing Actual times.
 4. Completed means valid after-flight grounded/stationary/all-engines-stopped completion, not just phase PARKED. Missing touchdown remains allowed.
 5. First successful matching operational OFP gates commencement; later handover has no new OFP prerequisite.
 6. One automatic message per eligible subsequent leg; none for the initial leg. Known successful preparation/arrival generation/accepted submission is not automatically repeated.
 7. Actual times are independent and non-editable. Do not reject recorded history merely because a manual simulator-clock change makes timestamps non-monotonic; planning-time conflicts are validated separately.
 8. Clearing removes all rotation-owned state in one snapshot, preserving preferences/credentials. Stale callbacks cannot repopulate it.
+9. User ordering edits cannot invalidate an unresolved request's captured eligibility context. Unrelated later-leg edits remain possible; normal handover/departure is not blocked by this ordering guard.
 
 ## Concrete review examples
 
@@ -221,5 +231,7 @@ Validate these invariants on commands and snapshot load:
 | A completes at 14:00Z; B departs at 14:06Z | Consume A→B handover and activate/lock B in one save. The derived 14:10 deadline later does nothing. |
 | Hoppie accepted a message, then the app restarts | Accepted submission and automatic-message marker restore; no resend. A lost unsaved outcome instead restores uncertainty. |
 | Final normal leg completes | Envelope retains its format/revision but rotation becomes null. Preferences and secret storage survive. |
+| Remove a pending leg after its preliminary message/result exists | Remove the operational leg; retain the message and required result/terminal-request provenance. The snapshot reloads successfully, historical leg IDs do not recreate the leg, and no further dispatch occurs for it. |
+| Insert/reorder a leg ahead of the target of an unresolved planning request | Reject the whole ordering edit with a generation-lock explanation. Request identity/context and the prior order remain unchanged; editing unrelated later legs is still allowed. |
 
 This draft can be reviewed without settling every external field. Remaining targeted choices are profile-application/conflict policy, exact supported SimBrief inputs/outputs, uncertain-result reconciliation and bounded detector context. JSON integrity/commit details remain in the persistence proposal. Next implementation artefacts, after model review, would be TypeScript domain types, a runtime snapshot schema and fixtures for these examples; none are implemented here.
