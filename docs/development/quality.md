@@ -14,6 +14,8 @@ The four pre-existing discovery artifacts are excluded from formatting/Markdown 
 
 PR title validation uses read-only event metadata, never a shell interpolation of the title. Stable jobs are `Repository checks` and `PR title`. The title workflow uses pull_request without checkout or contribution-code execution so title edits and forks can be checked safely. Repository checks run unprivileged on pull_request. Fork workflow approval can still be required by GitHub.
 
+Dependabot-authored PRs are exempt from Conventional Commit title validation. The `PR title` job still runs and succeeds explicitly for `dependabot[bot]`, preserving the required branch-protection check. The exemption uses the PR author rather than the triggering actor, so maintainer-triggered reruns remain exempt and other authors remain subject to validation.
+
 ## After baseline approval
 
 Introduce strict TypeScript compiler checks, explicit public contracts, unknown/narrowing rather than unjustified any, unused detection and consistent errors. Suppressions need a reason and bounded follow-up. Select ESLint TypeScript rules, Prettier, build tooling and boundary enforcement around actual paths.
