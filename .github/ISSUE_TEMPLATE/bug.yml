@@ -1,58 +1,93 @@
-{
-  "name": "Bug report",
-  "description": "Report a repository defect or future application problem",
-  "labels": ["bug"],
-  "body":
-    [
-      {
-        "type": "textarea",
-        "id": "field-0",
-        "attributes":
-          {
-            "label": "Stage and summary",
-            "description": "No application is released yet. Is this a repository issue or an authorised test build?",
-          },
-        "validations": { "required": true },
-      },
-      {
-        "type": "textarea",
-        "id": "field-1",
-        "attributes":
-          {
-            "label": "Versions",
-            "description": "Application/revision, Windows and MSFS version (or not applicable).",
-          },
-        "validations": { "required": true },
-      },
-      {
-        "type": "textarea",
-        "id": "field-2",
-        "attributes":
-          {
-            "label": "Aircraft and integrations",
-            "description": "Aircraft/add-on version; SimConnect, Navigraph/SimBrief and Hoppie status where relevant.",
-          },
-        "validations": { "required": false },
-      },
-      {
-        "type": "textarea",
-        "id": "field-3",
-        "attributes":
-          {
-            "label": "Reproduction",
-            "description": "Steps to reproduce, expected behaviour and actual behaviour.",
-          },
-        "validations": { "required": true },
-      },
-      {
-        "type": "textarea",
-        "id": "field-4",
-        "attributes":
-          {
-            "label": "Evidence",
-            "description": "Sanitised logs/screenshots; remove keys, personal OFPs and account data.",
-          },
-        "validations": { "required": false },
-      },
-    ],
-}
+name: Bug report
+description: Report a problem with AutoDispatch or this repository.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        AutoDispatch is in discovery; no application has been released yet. You can report repository problems now, or problems with an authorised test build when one exists.
+        For general issues, select Not applicable for simulator and aircraft fields. Never include passwords, tokens, Hoppie keys or personal account data.
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: What went wrong, and which part of AutoDispatch or the repository is affected?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Describe the actions that trigger the problem, including relevant settings or input values. If it happened only once, explain what you were doing.
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+      description: What happened instead? Include the exact error message if there was one.
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: AutoDispatch version
+      description: Enter the full application/test-build version or commit if known. For repository-only issues, enter Not applicable and optionally the affected commit or PR.
+      placeholder: Version or commit; Not applicable for repository-only issues
+    validations:
+      required: true
+  - type: dropdown
+    id: msfs-version
+    attributes:
+      label: Microsoft Flight Simulator version
+      description: Select the simulator used when the problem occurred. This does not imply validated compatibility.
+      options:
+        - MSFS 2020
+        - MSFS 2024
+        - Both MSFS 2020 and MSFS 2024 (reproduced in each)
+        - Not applicable - no simulator involved
+    validations:
+      required: true
+  - type: input
+    id: msfs-build
+    attributes:
+      label: Simulator build (if relevant)
+      description: If the problem involves the simulator, include its build number and whether you use a beta, if known. Otherwise leave blank.
+  - type: dropdown
+    id: aircraft-context
+    attributes:
+      label: Aircraft relevance
+      description: You do not need to establish the cause; indicate whether an aircraft was involved.
+      options:
+        - An aircraft was in use when the problem occurred
+        - Reproduced with multiple aircraft
+        - Not applicable - general or repository issue
+    validations:
+      required: true
+  - type: input
+    id: aircraft
+    attributes:
+      label: Aircraft and add-on version (if relevant)
+      description: Include developer, model/variant and add-on version if known. List each aircraft if you tried more than one. Leave blank for general or repository issues.
+      placeholder: e.g. developer, aircraft model/variant, add-on version
+  - type: textarea
+    id: integrations
+    attributes:
+      label: Integration status (if relevant)
+      description: For connection, planning or messaging issues, describe the displayed SimConnect/Navigraph status and whether Hoppie was configured. Include only relevant services; leave blank otherwise. Do not share credentials.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Logs, screenshots and additional context
+      description: Attach relevant screenshots or sanitised logs if available. Mention frequency, workarounds or whether this worked in an earlier build. Remove credentials, account details and personal flight-plan data before uploading.
