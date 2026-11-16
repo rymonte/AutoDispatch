@@ -1,6 +1,6 @@
 # Repository audit and settings
 
-Audit: 15 November 2026. Origin is `git@github.com:rymonte/AutoDispatch.git`; default branch is main. Repository is private; authenticated GitHub CLI user rymonte has ADMIN permission. Starting branch was arch-agentic-dev-foundations with a clean working tree at 3a01ea0. Bootstrap uses chore/repository-foundations.
+Audit: 15 November 2026. Origin is `git@github.com:rymonte/AutoDispatch.git`; default branch is main. At the bootstrap audit the repository was private; authenticated GitHub CLI user rymonte has ADMIN permission. Starting branch was arch-agentic-dev-foundations with a clean working tree at 3a01ea0. Bootstrap uses chore/repository-foundations.
 
 The five tracked files were README.md, prd.md, prd-v0.3.md and two domain/data proposals. All discovery artifacts were committed. There was no application scaffold, package tooling, workflow or executable test suite. This is legitimate discovery status. The four discovery artifacts remain unchanged. No issues were returned by the audit; no implementation backlog is created.
 
@@ -8,14 +8,23 @@ The five tracked files were README.md, prd.md, prd-v0.3.md and two domain/data p
 
 Use squash merging only, auto-delete merged branches and keep main as default. Required reviews remain zero for a solo maintainer; merge queue is unnecessary. Issue labels identify type and unresolved validation/decision status without assigning priorities to every discovery item.
 
-Both ruleset listing and legacy main protection API returned HTTP 403: GitHub requires a plan upgrade or public visibility for this private repository. Protection state therefore could not be inspected or configured. Visibility and ownership must remain unchanged. Until protection is available, the maintainer must enforce PR-only merges and avoid direct main pushes operationally; this is not technical enforcement.
+### Main protection update - 15 November 2026
 
-After plan eligibility changes, activate protection as follows:
+The product owner made the repository public and authorised protection of main. The earlier private-repository API limitation no longer applies. Visibility and ownership were not changed by this setup.
 
-1. Confirm Actions is enabled and the bootstrap PR has successful `Repository checks` and `PR title` jobs on its latest revision. Inspect `gh pr checks <number>` and the commit check-runs API; use the observed names, not assumed workflow names. Resolve failures first.
-2. In Settings ? Rules ? Rulesets, create a branch ruleset targeting main (or the default branch), initially disabled. Require pull requests with zero approvals, resolved conversations and linear history. Block force pushes and branch deletion. No routine admin bypass and no merge queue.
-3. Add only the observed successful status checks, selecting GitHub Actions as source where supported. Do not require future build/test/coverage jobs. Check that a sole maintainer can squash merge the PR without an unavailable approval.
-4. Activate only after successful check evidence. If activation happens after bootstrap merge, first verify these checks on a subsequent small PR. Record ruleset ID, settings and verification in a follow-up PR.
+Ruleset [Protect main](https://github.com/rymonte/AutoDispatch/rules/27330040) (ID 27330040) targets only refs/heads/main:
+
+- Require a pull request, with zero approving reviews for the solo-maintainer workflow.
+- Require all review conversations to be resolved.
+- Require successful Repository checks and PR title checks from GitHub Actions (integration ID 15368), with the branch up to date.
+- Require linear history; block force pushes and branch deletion.
+- No bypass actors, including administrators; no merge queue.
+
+Activation status: **active**. Both required jobs passed on [verification PR #5](https://github.com/rymonte/AutoDispatch/pull/5), at commit 6b3b034d4f9798cf64e6e8887ec955923de735af, before activation. The ruleset API then returned active with an empty bypass list; the effective main branch rules endpoint returned all five configured rules. GitHub reported the PR mergeable without a review approval. This final documentation update must pass the same checks before normal squash merge; no admin bypass is used.
+
+Squash merging is enabled and merged branches are automatically deleted. Repository-level rebase merging is also enabled; the contribution workflow remains squash-only. This protection change does not alter the other merge settings.
+
+The absence of a legacy branch-protection object does not mean the branch is unprotected when an active ruleset applies. Inspect both the ruleset and the effective branch rules using the GitHub API.
 
 Before public launch, enable private vulnerability reporting under Settings ? Security where available. Inspect secret scanning/push protection eligibility and enable supported controls. Neither is claimed active by bootstrap. CodeQL is deferred until supported source exists. The maintainer approved PolyForm Noncommercial 1.0.0 and contributor-retained copyright on 15 November 2026; see licensing.md. Development-baseline approval remains outstanding.
 
