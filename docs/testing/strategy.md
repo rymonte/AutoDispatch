@@ -2,6 +2,24 @@
 
 No executable application tests or compatibility results exist. PRD ACxx entries are acceptance criteria, not passed tests. Select the smallest coherent toolset once the implementation layout/build is approved; see the quality plan.
 
+## Early development prototype
+
+DEC-061 moves executable validation out of design issue #20 into the early development prototype. The product owner intends a flight-monitoring harness to observe phases, states and captured events. Closing #20 accepts contracts; it does not mark AC11/AC13, PRE-03/04/05/08/09 or provider compatibility as passed. Baseline approval and the applicable implementation/live-validation authorisation remain necessary before running it.
+
+The prototype has three responsibilities:
+
+| Responsibility        | Evidence to record                                                                                                                                                                                                                                                                   | Dependency                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| Flight monitoring     | Simulator/aircraft versions; sanitized expected versus observed phases, departure, return to gate, liftoff, arrival, shutdown, disconnect and missed-event cases. Preserve unknown timestamps and distinguish declared intent from detected arrival.                                 | PRE-03/04/05; AC03/12/13/15    |
+| Local domain and IPC  | Synthetic endpoint requests/results exercise typed validation, identical payloads routed to different handlers, response correlation, revision guards, duplicate commands, planning edits, recovery insertion, original ACARS retention and distinct SimBrief/Hoppie retry policies. | DEC-056–060/062; AC02/05/07/13 |
+| Working-state storage | Normal restart and process termination around write/replace/acknowledgement, action outcomes, recovery acceptance and clear. Include failed saves, unreadable state, retry budgets and separate settings/credentials. Record exact Windows/filesystem/runtime versions.              | DEC-054/060; AC11              |
+
+The flight harness alone cannot prove persistence reliability; add writer interruption checks when the writer exists. Use synthetic/fake services for local checks, with permitted recordings where helpful. Real service and simulator operations require their specific authorisation and evidence. JSON remains the preferred candidate; a failed reliability/complexity assessment triggers consideration of SQLite rather than a general file-repair engine.
+
+Broader OS-crash, sudden-power-loss and device-cache guarantees remain explicitly undecided under DEC-054. They are deferred from #20, not promised, waived or included in process-kill evidence. Decide them before claiming broader durability or commissioning that test programme. Deployment/licence checks remain in the licensing policy; no runtime/SDK adoption follows from design closure.
+
+## Implementation and release coverage
+
 Prioritise simulator-independent pure domain tests: rotation invariants, lifecycle/phase transitions, scheduling/turnaround, UTC semantics, dispatch eligibility, duplicates, recovery and ACARS content. Include boundary values, stale/unknown observations, phase skipping and failures. Use controlled clocks and synthetic telemetry.
 
 Add integration/contract tests for SimConnect ports, SimBrief parsing and generation outcomes, Hoppie acceptance/failure/ambiguity, persistence/recovery and IPC validation. Use synthetic or permitted redacted recordings; retain source, version and field semantics. Mocks establish behaviour against a model, not vendor compatibility. Avoid real credentials or network dependencies in normal CI.
