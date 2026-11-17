@@ -16,13 +16,13 @@ One backend coordinator serializes operational mutations, including the asynchro
 
 Accepted minimum (DEC-060):
 
-- IPC commands use enum discriminants and command-specific typed payloads. Runtime validation and sender checks are still necessary; TypeScript types alone do not validate incoming IPC.
+- IPC uses named internal endpoints and shared command-specific request/response DTOs under DEC-062. Each handler receives its request as a parameter; routing uses the endpoint, not shape inference or a formal command enum. Runtime validation and sender checks are still necessary; TypeScript types alone do not validate incoming IPC.
 - The backend checks identity, current planning revision/context, operational eligibility and holds. Reads expose a complete committed snapshot, never a half-applied recovery action.
 - Capture time and identifiers once for an action. Applying the same captured command twice must not create two legs, two local planning cycles or repeated effects. The IPC contract specifies the bounded last-command receipt and revision check; this is not a business-version system.
 - Build and validate the complete next state; persist it transactionally; then publish success and initiate dependent external effects. A save failure reports an error and does not adopt an unsaved operational state. Uncommitted form input may be retained for retry without pretending it is saved.
 - Existing external work cannot be rolled back by a local transaction. Save its outcome when possible; if the result was lost across termination, follow the distinct SimBrief/Hoppie policies below.
 
-The IPC contract defines the enum catalogue, command-specific payloads and replies, including StartRotation, EditLeg, DeclareDiversion, AcceptRecovery, SetMessageRead and ReplaceRotation. Payloads identify relevant entities and user inputs; the backend computes transitions. Security constraints remain in [architecture boundaries](docs/architecture/boundaries.md).
+The IPC contract defines the endpoint catalogue, shared request types and corresponding replies, including StartRotation, EditLeg, DeclareDiversion, AcceptRecovery, SetMessageRead and ReplaceRotation. Payloads identify relevant entities and user inputs; the backend computes transitions. Security constraints remain in [architecture boundaries](docs/architecture/boundaries.md).
 
 ## Planning, editing and response association
 
@@ -171,7 +171,7 @@ These are required future scenarios, not executed tests:
 | Accept C → B at 14:25 after 14:00 shutdown | Atomic insertion/activation/reset; requested off-block 14:25; original history and messages survive | AC11/15, DEC-056/057 |
 | No usable OFP, then user Retry | Four attempts per cycle at most; one local result; preserved input, durable cycle budget; first startup remains blocked | AC05/11/12, DEC-059 |
 | Hoppie timeout versus accepted/conflict | No blind resend; bounded known-rejection retries with frozen identities; audit survives reset | AC07, DEC-055/059 |
-| Repeated/malformed enum command | Runtime rejection or idempotent existing outcome; no duplicate leg/effect; committed snapshots only | AC13, DEC-060 |
+| Repeated/malformed endpoint request | Runtime rejection or idempotent existing outcome; no duplicate leg/effect; committed snapshots only | AC13, DEC-060 |
 | Save failure / unreadable current | Error, no adopted unsaved state/effect; preserve corrupt file and offer fresh rotation | AC11, DEC-060 |
 | Process termination at write/action boundaries | Whole old/new state; action outcomes and clear persist; restart never resurrects cleared data | AC11, DEC-054/060 |
 

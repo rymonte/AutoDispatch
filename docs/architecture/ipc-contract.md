@@ -1,23 +1,29 @@
 # Local IPC and state contract
 
-Design contract for issue #20, 17 November 2026. This specifies local messages and ownership for DEC-050/060/061. It is documentation, not an Electron scaffold or evidence that a writer or integration works. See the [data model](../../data-model-proposal.md), [PRD](../../prd.md) and [prototype plan](../testing/strategy.md#early-development-prototype).
+Design contract for issue #20, 17 November 2026. This specifies local messages and ownership for DEC-050/060/061/062. It is documentation, not an Electron scaffold or evidence that a writer or integration works. See the [data model](../../data-model-proposal.md), [PRD](../../prd.md) and [prototype plan](../testing/strategy.md#early-development-prototype).
 
 ## Ownership and transport
 
-React sends enum commands through a minimal preload API. Main validates the originating window/frame and routes operational commands to the utility process. The utility coordinator validates the payload and domain eligibility, serializes the transition and complete save, then replies and publishes a snapshot. Main does not own a second rotation model. Persistence and external requests remain utility-process integrations; domain modules define ports and import no platform APIs.
+React calls named methods with shared request/response types through a minimal preload API. Main validates the originating window/frame and routes operational commands to the utility process. The utility coordinator validates the payload and domain eligibility, serializes the transition and complete save, then replies and publishes a snapshot. Main does not own a second rotation model. Persistence and external requests remain utility-process integrations; domain modules define ports and import no platform APIs.
 
-Expose only `query(request)`, `command(request)` and `subscribe(listener)` for the catalogue below, plus the separate credential commands. Do not expose generic IPC channel selection, filesystem paths, arbitrary URLs, JavaScript execution or provider requests. Enum names below are exact wire values; payloads are discriminated by that enum. Runtime validators reject unknown fields and malformed values before mutation. Replies and adapter results are also validated.
+Expose a named method for each operation in the catalogue below, plus `subscribe(listener)` for display snapshots. Each method accepts its specific request DTO and returns a promise of its specific response DTO. Frontend and backend share platform-independent contract definitions; internal domain objects remain separate. Formal TypeScript enums and request classes are not required.
+
+Each method maps to one fixed, allowlisted internal IPC endpoint. Endpoint selection determines the handler and its request/response validators; never infer an operation by testing which payload shape matches. For example, RemoveLeg and CancelDiversion both accept a leg ID but use different endpoints. This is a controller-style interface over local IPC, with no HTTP server. Do not expose generic IPC channel selection, filesystem paths, arbitrary URLs, JavaScript execution or provider requests to React.
+
+Catalogue names define the shared types: operation `CancelDiversion` has `CancelDiversionRequest` and `CancelDiversionResponse`, exposed as `backend.cancelDiversion(request)`. Lowercase only the first letter for the method name. Endpoint names are `autodispatch/queries/<method>`, `autodispatch/commands/<method>` and `autodispatch/credentials/<method>` for their respective catalogues; SavePreferences uses the commands prefix. These endpoint strings are transport identifiers, not a required command enum or a field in the request DTO. The bridge owns the fixed mapping; it cannot route a supplied name to arbitrary methods.
+
+Runtime validators reject unknown fields and malformed values before mutation. TypeScript annotations alone do not validate IPC input or provide runtime dispatch. Validate responses against the invoked endpoint's response definition and correlation ID; response handling does not guess by shape either. Replies and adapter results are validated as plain data, without depending on class prototypes or `instanceof`.
 
 ## Envelopes, replies and duplicate handling
 
 ```text
-Query = { requestId: Id, type: QueryType, payload: payload-for-type }
-Command = { commandId: Id, type: CommandType, expectedRevision: Revision,
-            rotationId: Id | null, payload: payload-for-type }
+QueryMetadata = { requestId: Id }
+CommandMetadata = { commandId: Id, expectedRevision: Revision, rotationId: Id | null }
+NameRequest = metadata-for-catalogue & request-fields-for-operation
 CommandReply = { commandId: Id, status: committed, revision: Revision,
                  entityIds: Id[] }
              | { commandId: Id, status: rejected, error: Error }
-QueryReply = { requestId: Id, status: ok, value: result-for-type }
+QueryReply = { requestId: Id, status: ok, value: result-for-operation }
            | { requestId: Id, status: rejected, error: Error }
 Error = { code: ErrorCode, message: string, fieldErrors: FieldError[] }
 FieldError = { field: string, code: string, message: string }
@@ -28,11 +34,31 @@ CommandReceipt = { commandId: Id, requestDigest: string, revision: Revision,
                    entityIds: Id[] }
 ```
 
+For each query, NameResponse is QueryReply with the catalogue's specific result type. For each operational command (including SavePreferences), NameResponse uses the common CommandReply shape. Identical response shapes are allowed: the outstanding endpoint invocation and correlation ID determine which response is expected. Valid status/error string values are constrained by the contract without requiring formal enum declarations.
+
+For example, these are shared interface definitions, not runtime implementation:
+
+```ts
+type CancelDiversionRequest = CommandMetadata & { legId: Id };
+type CancelDiversionResponse = CommandReply;
+type RemoveLegRequest = CommandMetadata & { legId: Id };
+type RemoveLegResponse = CommandReply;
+
+interface BackendApi {
+  cancelDiversion(
+    request: CancelDiversionRequest,
+  ): Promise<CancelDiversionResponse>;
+  removeLeg(request: RemoveLegRequest): Promise<RemoveLegResponse>;
+}
+```
+
+The two methods route to `autodispatch/commands/cancelDiversion` and `autodispatch/commands/removeLeg` respectively. The selected backend handler receives its validated request as a parameter. A malformed request or unknown endpoint fails with InvalidPayload before any handler runs; if no valid correlation ID can be read, reject the invocation at the transport boundary rather than inventing an ID.
+
 Operational `expectedRevision` refers to WorkingState.revision; preference commands use Preferences.revision. `rotationId` must match for rotation-scoped commands. Create uses null when no rotation exists; replacement names the old rotation. Revision checks are deliberately simple: a changed committed state may require the UI to refresh and ask the user to retry. Telemetry samples are not saves; only meaningful facts advance the committed snapshot. This envelope revision is not a business leg version.
 
 The UI allows one mutation in flight at a time, with the same command ID only for duplicate delivery of identical input. It does not automatically replay a command after a missing reply. Each store retains only its last committed CommandReceipt, written in the same transaction as the change and preserved through subsequent telemetry saves. Check a matching receipt before revision validation: identical canonical request digest returns the existing committed reply without effects; same ID/different input is InvalidPayload. Otherwise require the expected revision and current domain eligibility. Older duplicate commands have stale revisions and are rejected. No unbounded command ledger is needed.
 
-Canonical request digest uses the model's canonical JSON/SHA-256 encoding over the non-secret command envelope. Secret commands never enter this receipt mechanism. All committed commands increment their target store revision, including an already-satisfied SetMessageRead, so an old unrecorded duplicate cannot appear current. No cross-store transaction is promised: applying profile values to legs is separate from saving preferences.
+Canonical request digest uses the model's canonical JSON/SHA-256 encoding over `{ endpoint, request }` for the non-secret command. Include the endpoint so identical fields sent to different operations cannot match a receipt. Secret commands never enter this receipt mechanism. All committed commands increment their target store revision, including an already-satisfied SetMessageRead, so an old unrecorded duplicate cannot appear current. No cross-store transaction is promised: applying profile values to legs is separate from saving preferences.
 
 `committed` means the local transition/intent is saved, not that SimBrief or Hoppie succeeded. The backend captures approval time and generated IDs once, commits them, then sends dependent work. Subsequent result states arrive in snapshots. A save failure returns StorageUnavailable, publishes no candidate state and sends no dependent effect. If commit outcome is uncertain, block further mutation and reconcile the current file before reporting a committed state. No unsaved operational mode.
 
@@ -40,7 +66,7 @@ If a reply is lost, the UI queries committed state. A backend failure displays B
 
 ## Query catalogue
 
-| QueryType        | Payload                | Result                                                                                                                                                                                            |
+| Definition       | Request fields         | Result                                                                                                                                                                                            |
 | ---------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GetSnapshot      | `{}`                   | DisplaySnapshot below.                                                                                                                                                                            |
 | GetPreferences   | `{}`                   | Preferences excluding schemaVersion and lastCommand; retain revision for edits, no secrets.                                                                                                       |
@@ -48,13 +74,13 @@ If a reply is lost, the UI queries committed state. A backend failure displays B
 | GetRecoveryDraft | `{ inboundLegId: Id }` | `{ planning: LegPlanningInput, kind: redispatch or reposition }` derived from the confirmed arrival; no save or generation.                                                                       |
 | GetPlanDocument  | `{ resultId: Id }`     | `{ mediaType: string, content: string }` for supported bounded text content, or UnsupportedCapability. Binary content returns UnsupportedCapability; this query never opens arbitrary paths/URLs. |
 
-Queries are read-only: no activation, retries, credential refresh side effects or hidden saves. GetRecoveryDraft supplies callsign/default route values without recording an approval time; AcceptRecovery captures that time.
+Each query request combines QueryMetadata with its listed fields as one flat DTO. Queries are read-only: no activation, retries, credential refresh side effects or hidden saves. GetRecoveryDraft supplies callsign/default route values without recording an approval time; AcceptRecovery captures that time.
 
 ## Operational command catalogue
 
-`LegPlanningInput`, `AircraftConfiguration`, `Id` and other types are defined in the data model. Full replacement of editable input is explicit; the backend supplies provenance, copied defaults and operational fields; no arbitrary JSON patch or mutation of operational facts is accepted.
+`LegPlanningInput`, `AircraftConfiguration`, `Id` and other types are defined in the data model. Each request combines CommandMetadata with the fields below as one flat DTO. Full replacement of editable input is explicit; the backend supplies provenance, copied defaults and operational fields; no arbitrary JSON patch or mutation of operational facts is accepted.
 
-| CommandType               | Payload                                                                               | Transition / principal guard                                                                                                                                                                                                                                                                   |
+| Definition                | Request fields                                                                        | Transition / principal guard                                                                                                                                                                                                                                                                   |
 | ------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CreateRotation            | `{ aircraft: AircraftConfiguration, legs: LegPlanningInput[] }`                       | No existing rotation; allocate stable IDs and save unstarted rotation.                                                                                                                                                                                                                         |
 | ReplaceRotation           | `{ confirmed: true, aircraft: AircraftConfiguration, legs: LegPlanningInput[] }`      | Confirmation names current rotation/revision; fresh rotation ID, clear old scoped state.                                                                                                                                                                                                       |
@@ -87,21 +113,21 @@ Response entityIds list newly created leg/request/message IDs where applicable, 
 
 ## Preferences and credential boundary
 
-SavePreferences takes `{ values: PreferencesInput }`, where PreferencesInput is exactly the model's preference fields excluding schemaVersion, revision and lastCommand. Validate the complete object and resolve airline/rule references before one preferences-file commit. Rotation values do not silently change; ApplyTurnaroundProfiles is separate. Preferences commands use rotationId null.
+SavePreferencesRequest combines CommandMetadata with `{ values: PreferencesInput }`; SavePreferencesResponse uses CommandReply. It is exposed as `backend.savePreferences(request)`, where PreferencesInput is exactly the model's preference fields excluding schemaVersion, revision and lastCommand. Validate the complete object and resolve airline/rule references before one preferences-file commit. Rotation values do not silently change; ApplyTurnaroundProfiles is separate. Preferences commands use rotationId null.
 
-Credential commands use `{ commandId: Id, type: CredentialCommand, payload }` with their own enum and command-specific payloads. Replies are `{ commandId, status: ok, result: started or signedOut or configured or unconfigured or connected or disconnected }` or `{ commandId, status: rejected, error: Error }`. They do not carry an operational revision or store a secret-bearing receipt. Repeated set/delete requests are idempotent by desired credential value; sign-in allows one current attempt and invalidates superseded callbacks. An error never claims successful deletion/encryption.
+Credential request DTOs combine `{ commandId: Id }` with their listed fields, using the separate allowlisted credential endpoints and named methods. Each has a corresponding NameRequest/NameResponse contract. Replies are `{ commandId, status: ok, result: started or signedOut or configured or unconfigured or connected or disconnected }` or `{ commandId, status: rejected, error: Error }`. They do not carry an operational revision or store a secret-bearing receipt. Repeated set/delete requests are idempotent by desired credential value; sign-in allows one current attempt and invalidates superseded callbacks. An error never claims successful deletion/encryption.
 
-The catalogue is:
+Each credential response restricts successful result values to those specified for its operation below; other success values are invalid for that endpoint. The catalogue is:
 
-| CredentialCommand    | Payload           | Result / owner                                                                                                                                                              |
+| Definition           | Request fields    | Result / owner                                                                                                                                                              |
 | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | BeginNavigraphSignIn | `{}`              | Utility authentication integration coordinates the verified provider flow; main opens only allowlisted auth URLs. Return started or safe error, never tokens.               |
 | SignOutNavigraph     | `{}`              | Stop new authenticated work, clear utility token cache and ask main to delete the stored credential; return signedOut only on success. Existing rotation data is unchanged. |
 | SetHoppieKey         | `{ key: string }` | Main encrypts and saves; return configured only after success.                                                                                                              |
-| DeleteHoppieKey      | `{}`              | Main deletes saved key and clears utility cache; missing key is already satisfied.                                                                                          |
+| DeleteHoppieKey      | `{}`              | Main deletes saved key and clears utility cache; return unconfigured, including when already absent.                                                                        |
 | TestHoppieConnection | `{}`              | Utility uses the verified non-message test when supported; return connection status or UnsupportedCapability, never send test ACARS content implicitly.                     |
 
-A submitted key is transient sensitive input, cleared from the input control after completion; it is never copied into operational snapshots, command receipts or logs. Main exposes no renderer GetSecret operation. Only the trusted utility authentication/Hoppie adapters may request internal `ReadCredential`, `WriteCredential` and `DeleteCredential` operations for the fixed provider enum navigraph/hoppie. No arbitrary credential names or paths. Decrypted values live only as needed in adapter memory and are cleared on sign-out/key replacement/process exit. The domain receives connection/authentication status, not tokens.
+A submitted key is transient sensitive input, cleared from the input control after completion; it is never copied into operational snapshots, command receipts or logs. Main exposes no renderer GetSecret operation. Only the trusted utility authentication/Hoppie adapters may request internal `ReadCredential`, `WriteCredential` and `DeleteCredential` operations for the fixed allowed provider values navigraph/hoppie. No arbitrary credential names or paths. Decrypted values live only as needed in adapter memory and are cleared on sign-out/key replacement/process exit. The domain receives connection/authentication status, not tokens.
 
 Check safeStorage encryption availability before saving. If unavailable or storage fails, return an error; never fall back to plaintext or report success. Provider callback handling must validate the actual provider's flow/state; API scopes, redirect method and refresh semantics remain PRE-01/02 evidence dependencies, not invented endpoints. Ignore callbacks from a superseded authentication attempt after sign-out/replacement. Enabling/disabling Hoppie is a non-secret preference; it does not automatically submit historical messages.
 
@@ -142,4 +168,4 @@ Implementation must reject oversized input at the earliest transport boundary an
 
 Diagnostics record system UTC, command/request IDs, error codes and safe transitions only. Default retention is three rotating files of at most 2 MiB each, separate from rotation ACARS history. No credentials, raw auth responses, message bodies, full service payloads or personal diagnostics. Do not replay logs as state or delete ACARS history to enforce diagnostic limits. These bounded technical defaults may be tuned during the prototype without changing message-retention policy.
 
-Tests for payload validation, duplicate delivery, stale results, save failure and restart belong to the early-development prototype under DEC-061. Issue #20 closes on acceptance of this design and the explicit data model; it does not claim executable validation or overall development-baseline approval. Licence/deployment gates remain in the [licensing policy](../development/licensing.md); this contract adopts no runtime dependency or vendor SDK.
+Tests for endpoint routing (including identical payload shapes on different endpoints), request/response validation, duplicate delivery, stale results, save failure and restart belong to the early-development prototype under DEC-061. Issue #20 closes on acceptance of this design and the explicit data model; it does not claim executable validation or overall development-baseline approval. Licence/deployment gates remain in the [licensing policy](../development/licensing.md); this contract adopts no runtime dependency or vendor SDK.
