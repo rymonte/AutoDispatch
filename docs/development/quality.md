@@ -8,7 +8,9 @@ npm run check
 npm audit --omit=optional --audit-level=high
 ```
 
-`npm run format` formats maintained files. Prettier checks Markdown, JSON, YAML and tooling JavaScript; markdownlint checks documentation structure. The repository script strictly parses YAML/JSON, verifies relative Markdown file targets and full action SHA pins. Dependency audit checks development-tool advisories. CI uses the same commands. No application build, tests or coverage exists.
+`npm run format` formats maintained files. Prettier checks Markdown, JSON, YAML and tooling JavaScript; markdownlint checks documentation structure. `scripts/check-markdown.mjs` invokes the lint engine directly with `.markdownlint.json`, checking tracked and non-ignored untracked Markdown files, including hidden directories. Git-ignored untracked output is excluded; tracked files remain checked even if a later ignore pattern matches them. The repository script strictly parses YAML/JSON, verifies relative Markdown file targets and full action SHA pins. Dependency audit checks development-tool advisories. CI uses the same commands. No application build, tests or coverage exists; the Markdown runner has tooling regression tests included in `npm run check`.
+
+The direct lint runner replaces `markdownlint-cli2`'s glob dependency chain, which pulled in the unpatched high-severity `picomatch` advisory [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf). It retains the same lint-engine version and rule settings without an audit exemption, forced downgrade or new runtime dependency. Regression cases check lint failures, new/hidden files, filenames containing spaces, archive exclusions and tracked-versus-ignored file selection.
 
 The four pre-existing discovery artifacts are excluded from formatting/Markdown style checks to preserve their contents. Their file links use local research paths and are not portable; the local link check scopes itself to maintained documentation. Do not broaden exclusions to hide newly introduced problems. Network link availability is not asserted.
 

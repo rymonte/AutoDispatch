@@ -8,12 +8,12 @@
     "node": ">=24 <25"
   },
   "scripts": {
-    "check": "prettier --check . && markdownlint-cli2 && node scripts/check-repository.mjs",
+    "check": "prettier --check . && node scripts/check-markdown.mjs && node --test scripts/check-markdown.test.mjs && node scripts/check-repository.mjs",
     "format": "prettier --write ."
   },
   "devDependencies": {
     "prettier": "3.10.1",
-    "markdownlint-cli2": "0.24.1",
+    "markdownlint": "0.42.1",
     "yaml": "2.9.1"
   }
 }
