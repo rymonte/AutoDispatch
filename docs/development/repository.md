@@ -30,4 +30,4 @@ Before public launch, enable private vulnerability reporting under Settings ? Se
 
 ## Verification limits
 
-Repository tooling uses no runtime dependencies. npm audit initially reported four low-severity findings through markdownlint's transitive KaTeX dependency (GHSA-238p-pmpm-9mq7); no high/critical findings. Do not force-downgrade the linter or suppress the advisory to claim a clean audit. Dependabot can track the upstream fix. Formatting and lint exclusions preserve the four existing discovery artifacts rather than rewriting authoritative research.
+Repository tooling uses no runtime dependencies. The direct Markdown lint runner removes the CLI wrapper's unpatched `picomatch` dependency chain (GHSA-fc5q-39xc-vjpf) while retaining the same lint engine and rules. The transitive KaTeX advisory (GHSA-238p-pmpm-9mq7) remains a known low-severity finding; a passing high-severity audit threshold is not a claim of zero advisories. Do not force-downgrade the linter or suppress advisories. Dependabot can track upstream fixes. Formatting and lint exclusions preserve the four existing discovery artifacts rather than rewriting authoritative research.
